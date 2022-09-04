@@ -152,11 +152,9 @@ List dfsane_mis(int n, vec b, vec Time, vec Delta, mat Covari, vec targetvector)
     
     if (tol_y>0) {
       sig_k = (sum(s_k%y_k))/tol_y;
-    } else {
-      sig_k = sig_k;
     }
     
-    abssig_k = abs(sig_k);
+    abssig_k = std::abs(sig_k);
     if ((sig_min>abssig_k) || (sig_max<abssig_k)){
       if (tol_f<1e-10){
         sig_k = 1e+5;
@@ -188,7 +186,7 @@ List dfsane_mis(int n, vec b, vec Time, vec Delta, mat Covari, vec targetvector)
       LHS_m = f_bar.max() + eta_k - gam * pow(alp_m,2) * tol_f;
       
       if (RHS_p<=LHS_p){
-        d_k = d_k;
+        // d_k = d_k;
         a_k = alp_p;
         b_new = b_old + a_k * d_k;
         step_tol = 1;
@@ -278,11 +276,9 @@ List dfsane_mns(int n, vec b, vec Time, vec Delta, mat Covari, vec targetvector)
     
     if (tol_y>0) {
       sig_k = (sum(s_k%y_k))/tol_y;
-    } else {
-      sig_k = sig_k;
     }
     
-    abssig_k = abs(sig_k);
+    abssig_k = std::abs(sig_k);
     if ((sig_min>abssig_k) || (sig_max<abssig_k)){
       if (tol_f<1e-10){
         sig_k = 1e+5;
@@ -314,7 +310,7 @@ List dfsane_mns(int n, vec b, vec Time, vec Delta, mat Covari, vec targetvector)
       LHS_m = f_bar.max() + eta_k - gam * pow(alp_m,2) * tol_f;
       
       if (RHS_p<=LHS_p){
-        d_k = d_k;
+        // d_k = d_k;
         a_k = alp_p;
         b_new = b_old + a_k * d_k;
         step_tol = 1;

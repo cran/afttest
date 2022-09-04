@@ -1,4 +1,4 @@
-062fba9fc967ee7639469a28a3ec6252 *DESCRIPTION
+4481861fd512e21a935dd6334f16f533 *DESCRIPTION
 c79b631745d6425beb00b71ba4b9538d *NAMESPACE
 e02a73af148f9d4902514c99b9a5af1b *R/RcppExports.R
 5489d9d097c41cf5a0f73933f622b986 *R/afttest.R
@@ -10,4 +10,4 @@ ab017a881f1b74c5afd0bc72e0e111ec *man/afttestplot.Rd
 3eaa2b331062868bd0e4563f0ee91912 *man/plotting_link.Rd
 3c7145e16d4d5f4d633ab7ac5e218964 *man/plotting_omni.Rd
 77b069f362885302f16e22f781c34811 *src/Makevars.win
-f1d000292afe1ae8dd0c87ee130a77ff *src/source_cpp.cpp
+ecf9cc3dbee46968ba7d23b4eaa022c9 *src/source_cpp.cpp
