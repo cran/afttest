@@ -4,48 +4,81 @@
 \alias{afttestplot}
 \title{afttestplot}
 \usage{
-afttestplot(result, path = 100, std = "std")
+afttestplot(object, path = 50, stdType = "std")
 }
 \arguments{
-\item{result}{For function afttestplot, the only required argument is
-afttestresult based on the result from the afttest function. Whatever
-the testtype of the result is, it automatically gives the corresponding
-graph.}
+\item{object}{is a \code{afttest} fit}
 
-\item{path}{The argument path is for the number of the simulation paths
-that is plotted in the graph. Therefore it needs to be equal or less than
-the number of paths used in by afttest function, otherwise it is given as
-the number of paths used in by afttest function. The default is set to be 100.}
+\item{path}{A numeric value specifies the number of approximated processes plotted
+The default is set to be 100.}
 
-\item{std}{The option for the argument std is "unstd" and "std". In this 
-argument, "std" is the default.}
+\item{stdType}{A character string specifying if the graph is based on the 
+unstandardized test statistics or standardized test statistics
+The default is set to be "std".}
 }
 \value{
-Basically, a graph from the afttestplot is based on the packages
-ggplot2 (Wickham, 2009) and gridExtra (Auguie, 2017). It offers a graph that
-y-axis is the test statistics and x-axis represents the rank of the subjects
-ordered by time transformed residual. Since the result of the omnibus test
-is the form of n by n matrix, some quantiles of x, which are used in weight,
-are plotted for graphs, i.e. 0%, 10%, 25%, 40%, 50%, 60%, 75%, 90%, and 100%
-are used.
+\code{afttestplot} returns a plot based on the \code{testType}:
+\describe{
+   \item{omni}{an object of the omnibus test is the form of n by n matrix, 
+   some quantiles of x, which are used in weight, are plotted for graphs, 
+   i.e. 10\%, 25\%, 50\%, 75\%, and 90\% are used.}
+   \item{link}{an object of the link function test is the form of n by 1 matrix}
+   \item{form}{an object of the functional form test is the form of n by 1 matrix}
+}
+   See the documentation of \pkg{ggplot2} and \pkg{gridExtra} for details.
+
+\code{afttestplot} returns a plot based on the \code{testType}:
+\describe{
+   \item{omni}{an object of the omnibus test is the form of n by n matrix, 
+   some quantiles of x, which are used in weight, are plotted for graphs, 
+   i.e. 0\%, 10\%, 25\%, 40\%, 50\%, 60\%, 75\%, 90\%, and 100\% are used.}
+   \item{link}{an object of the link function test is the form of n by 1 matrix}
+   \item{form}{an object of the functional form test is the form of n by 1 matrix}
+}
+   See the documentation of \pkg{ggplot2} and \pkg{gridExtra} for details.
 }
 \description{
-It gives plot for cheking the aft model assumptions.
+afttestplot
 }
 \examples{
-# library(afttest)
-# library(survival)
+## Simulate data from an AFT model
+datgen <- function(n = 100) {
+  z1 <- rbinom(n, 1, 0.5)
+  z2 <- rnorm(n)
+  e <- rnorm(n)
+  tt <- exp(2 + z1 + z2 + e)
+  cen <- runif(n, 0, 100)
+  data.frame(Time = pmin(tt, cen), status = 1 * (tt < cen),
+             z1 = z1, z2 = z2, id = 1:n)
+}
+set.seed(1)
+simdata = datgen(n = 20)
 
-# set.seed(1)
-# path = 200
+X = simdata$Time
+D = simdata$status
+z1 = simdata$z1
+z2 = simdata$z2
 
-# cgd_data = subset(cgd,enum==1)
-# D_cgd = cgd_data$status
-# X_cgd = cgd_data$tstop - cgd_data$tstart
-# X_cgd = X_cgd + runif(length(X_cgd))/1e4
-# trt = ifelse(cgd_data$treat=="placebo",0,1)
+result = afttest(Surv(X, D) ~ z1 + z2, testType="link", eqType="mns")
+afttestplot(result)
+## Simulate data from an AFT model
+datgen <- function(n = 100) {
+  z1 <- rbinom(n, 1, 0.5)
+  z2 <- rnorm(n)
+  e <- rnorm(n)
+  tt <- exp(2 + z1 + z2 + e)
+  cen <- runif(n, 0, 100)
+  data.frame(Time = pmin(tt, cen), status = 1 * (tt < cen),
+             z1 = z1, z2 = z2, id = 1:n)
+}
+set.seed(1)
+simdata = datgen(n = 20)
 
-# result01_afttest_link_mns=afttest(Surv(X_cgd,D_cgd)~trt,path=path,testtype="link",eqType="mns")
-# afttestplot(result01_afttest_link_mns,std="std")
+X = simdata$Time
+D = simdata$status
+z1 = simdata$z1
+z2 = simdata$z2
 
+result = afttest(Surv(X, D) ~ z1 + z2, testType="link", eqType="mns")
+afttestplot(result)
 }
