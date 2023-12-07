@@ -4,7 +4,7 @@
 \alias{afttestplot}
 \title{afttestplot}
 \usage{
-afttestplot(object, path = 50, stdType = "std")
+afttestplot(object, path = 50, stdType = "std", quantile = NULL)
 }
 \arguments{
 \item{object}{is a \code{afttest} fit}
@@ -15,6 +15,9 @@ The default is set to be 100.}
 \item{stdType}{A character string specifying if the graph is based on the 
 unstandardized test statistics or standardized test statistics
 The default is set to be "std".}
+
+\item{quantile}{A numeric vector specifies 5 of five quantiles within the range [0,1]. 
+The default is set to be c(0.1,0.25,0.5,0.75,0.9).}
 }
 \value{
 \code{afttestplot} returns a plot based on the \code{testType}:
@@ -35,7 +38,7 @@ The default is set to be "std".}
    \item{link}{an object of the link function test is the form of n by 1 matrix}
    \item{form}{an object of the functional form test is the form of n by 1 matrix}
 }
-   See the documentation of \pkg{ggplot2} and \pkg{gridExtra} for details.
+   See the documentation of \pkg{ggplot2} and \pkg{gridExtra} for details.\
 }
 \description{
 afttestplot
@@ -51,15 +54,15 @@ datgen <- function(n = 100) {
   data.frame(Time = pmin(tt, cen), status = 1 * (tt < cen),
              z1 = z1, z2 = z2, id = 1:n)
 }
-set.seed(1)
-simdata = datgen(n = 20)
+set.seed(0)
+simdata <- datgen(n = 20)
 
-X = simdata$Time
-D = simdata$status
-z1 = simdata$z1
-z2 = simdata$z2
+X <- simdata$Time
+D <- simdata$status
+z1 <- simdata$z1
+z2 <- simdata$z2
 
-result = afttest(Surv(X, D) ~ z1 + z2, testType="link", eqType="mns")
+result <- afttest(Surv(X, D) ~ z1 + z2, testType="link", eqType="mns")
 afttestplot(result)
 ## Simulate data from an AFT model
 datgen <- function(n = 100) {
@@ -71,14 +74,14 @@ datgen <- function(n = 100) {
   data.frame(Time = pmin(tt, cen), status = 1 * (tt < cen),
              z1 = z1, z2 = z2, id = 1:n)
 }
-set.seed(1)
-simdata = datgen(n = 20)
+set.seed(0)
+simdata <- datgen(n = 20)
 
-X = simdata$Time
-D = simdata$status
-z1 = simdata$z1
-z2 = simdata$z2
+X <- simdata$Time
+D <- simdata$status
+z1 <- simdata$z1
+z2 <- simdata$z2
 
-result = afttest(Surv(X, D) ~ z1 + z2, testType="link", eqType="mns")
+result <- afttest(Surv(X, D) ~ z1 + z2, testType="link", eqType="mns")
 afttestplot(result)
 }
