@@ -7,7 +7,7 @@
 #' @param formula A formula expression, of the form \code{response ~ predictors}.
 #'    The \code{response} is a \code{Surv} object object with right censoring.
 #'    See the documentation of \code{lm}, \code{coxph} and \code{formula} for details.
-#' @param path A numeric value specifies the approximated processes number.
+#' @param path An integer value specifies the number of approximated processes.
 #'    The default is given by 200.
 #' @param testType A character string specifying the type of the test.
 #'    The following are permitted:
@@ -21,10 +21,10 @@
 #'    The readers are refered to the \pkg{aftgee} package for details.
 #'    The following are permitted:
 #'    \describe{
-#'      \item{\code{mis}}{Regression parameters are estimated by iterating 
-#'      the monotonic smoothed Gehan-based estimating equations.}
 #'      \item{\code{mns}}{Regression parameters are estimated by iterating 
 #'      the monotonic non-smoothed Gehan-based estimating equations.}
+#'      \item{\code{mis}}{Regression parameters are estimated by iterating 
+#'      the monotonic smoothed Gehan-based estimating equations.}
 #' }
 #' @param optimType A character string specifying the type of the optimization method.
 #'    The following are permitted:
@@ -41,8 +41,8 @@
 #'    The argument form is necessary only if \code{testType} is \code{form}.
 #'    The default option for \code{form} is given by "1", which represents the 
 #'    first covariate in the formula argument.
-#' @param pathsave A numeric value specifies he number of paths saved among all the paths.
-#'    The default is given by 100. Note that it requires a lot of memory if save all
+#' @param pathsave An integer value specifies he number of paths saved among all the paths.
+#'    The default is given by 50. Note that it requires a lot of memory if save all
 #'    sampled paths (N by N matrix for each path andso path*N*N elements)
 #' @return \code{afttest} returns an object of class \code{afttest}.
 #'    An object of class \code{afttest} is a list containing at least the following components:
@@ -74,8 +74,8 @@
 #' 
 #' @example inst/examples/ex_afttest.R
 #' @export
-afttest <- function(formula, path = 200, testType = "omni", eqType = "mis", 
-                    optimType = "DFSANE", form = 1, pathsave = 100) {
+afttest <- function(formula, path = 200, testType = "omni", eqType = "mns", 
+                    optimType = "DFSANE", form = 1, pathsave = 50) {
   
   # Data Frame
   DF <- stats::get_all_vars(formula)
@@ -121,10 +121,14 @@ afttest <- function(formula, path = 200, testType = "omni", eqType = "mis",
   b <- - aftgee::aftsrr(formula, data = DF, eqType = eqType)$beta
   
   # path
-  if (!is.numeric(path)) {
-    path <- 200
+  if (length(path) > 1){
+    return(warning("path needs to be an integer."))
   } else {
-    path <- max(path,10)
+    if (!is.numeric(path)) {
+      path <- 200
+    } else {
+      path <- max(path,50)
+    }
   }
   
   # testType
@@ -135,10 +139,10 @@ afttest <- function(formula, path = 200, testType = "omni", eqType = "mis",
   }
   
   # eqType
-  if (!eqType %in% c("mis","mns")) {
-    eqType <- "mis"
+  if (!eqType %in% c("mns","mis")) {
+    eqType <- "mns"
   } else {
-    eqType <- match.arg(eqType, c("mis","mns"))
+    eqType <- match.arg(eqType, c("mns","mis"))
   }
   
   # optimType
@@ -149,10 +153,12 @@ afttest <- function(formula, path = 200, testType = "omni", eqType = "mis",
   }
   
   # pathsave
-  if (!is.numeric(pathsave)) {
-    pathsave <- 200
+  if (length(pathsave) > 1){
+    return(warning("pathsave needs to be an integer."))
   } else {
-    pathsave <- max(path,10)
+    if (!is.numeric(pathsave)) {
+      pathsave <- 50
+    }
   }
   
   # form
@@ -160,16 +166,16 @@ afttest <- function(formula, path = 200, testType = "omni", eqType = "mis",
     if (length(form) > 1){
       return(warning("the length if form needs to be exactly 1."))
     } else {
-      if (is.character(form)) {
+      if (is.numeric(form)) {
+        if (form > cov.length){
+          return(warning("form is greater than the lenght of covariates. form needs to be specified correctly."))
+        }
+      } else if (is.character(form)) {
         if (!form %in% covnames) {
           form <- 1
         } else {
           form <- which(form == covnames)
         }
-      } else if (is.numeric(form)) {
-        if (form > cov.length){
-          return(warning("form is greater than the lenght of covariates. form needs to be specified correctly."))
-        } 
       } else {
         return(warning("form needs to be specified correctly."))
       }
@@ -222,10 +228,12 @@ afttest <- function(formula, path = 200, testType = "omni", eqType = "mis",
   out$missingmessage <- missingmessage
   
   out$DF <- DF
+  out$beta <- b
   out$path <- path
   out$eqType <- eqType
   out$testType <- testType
   out$optimType <- optimType
+  out$pathsave <- pathsave
   
   return(out)
 }

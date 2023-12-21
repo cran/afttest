@@ -8,10 +8,10 @@ afttest(
   formula,
   path = 200,
   testType = "omni",
-  eqType = "mis",
+  eqType = "mns",
   optimType = "DFSANE",
   form = 1,
-  pathsave = 100
+  pathsave = 50
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ afttest(
 The \code{response} is a \code{Surv} object object with right censoring.
 See the documentation of \code{lm}, \code{coxph} and \code{formula} for details.}
 
-\item{path}{A numeric value specifies the approximated processes number.
+\item{path}{An integer value specifies the number of approximated processes.
 The default is given by 200.}
 
 \item{testType}{A character string specifying the type of the test.
@@ -35,10 +35,10 @@ The default is given by 200.}
    The readers are refered to the \pkg{aftgee} package for details.
    The following are permitted:
    \describe{
-     \item{\code{mis}}{Regression parameters are estimated by iterating 
-     the monotonic smoothed Gehan-based estimating equations.}
      \item{\code{mns}}{Regression parameters are estimated by iterating 
      the monotonic non-smoothed Gehan-based estimating equations.}
+     \item{\code{mis}}{Regression parameters are estimated by iterating 
+     the monotonic smoothed Gehan-based estimating equations.}
 }}
 
 \item{optimType}{A character string specifying the type of the optimization method.
@@ -58,8 +58,8 @@ The argument form is necessary only if \code{testType} is \code{form}.
 The default option for \code{form} is given by "1", which represents the 
 first covariate in the formula argument.}
 
-\item{pathsave}{A numeric value specifies he number of paths saved among all the paths.
-The default is given by 100. Note that it requires a lot of memory if save all
+\item{pathsave}{An integer value specifies he number of paths saved among all the paths.
+The default is given by 50. Note that it requires a lot of memory if save all
 sampled paths (N by N matrix for each path andso path*N*N elements)}
 }
 \value{
