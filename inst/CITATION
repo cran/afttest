@@ -1,44 +1,69 @@
 bibentry(
-    key = "afttest-R-package",
-    bibtype = "Manual",
-    title = "{afttest}: Model Diagnostics for Accelerated Failure Time Models",
+    key = "bae2025afttest",
+    bibtype = "article",
+    title = "Diagnostics for semiparametric accelerated failure time models with R Package afttest",
     author = c(
         as.person("WooJung Bae"),
         as.person("Dongrak Choi"),
         as.person("Jun Yan"),
         as.person("Sangwook Kang")
         ),
-    year = "2023",
+    journal = "arXiv",
+    year = "2025",
+    url = "https://arxiv.org/abs/2511.09823",
+    doi = "10.48550/arXiv.2511.09823"
+)
+
+bibentry(
+    key = "choi2024general",
+    bibtype = "article",
+    title = "A general model-checking procedure for semiparametric accelerated failure time models",
+    author = c(
+        as.person("Dongrak Choi"),
+        as.person("WooJung Bae"),
+        as.person("Jun Yan"),
+        as.person("Sangwook Kang")
+        ),
+    journal = "Statistics and Computing",
+    volume = "34",
+    issue= "3",
+    pages= "117",
+    year = "2024",
+    doi = "10.1007/s11222-024-10431-7",
+    publisher = "Springer"
+)
+
+bibentry(
+    key = "bae2022afttest",
+    bibtype = "manual",
+    title = "afttest: Model diagnostics for accelerated failure time models",
+    author = c(
+        as.person("WooJung Bae"),
+        as.person("Dongrak Choi"),
+        as.person("Jun Yan"),
+        as.person("Sangwook Kang")
+        ),
+    year = "2022",
+    note = "R package version 4.5.1",
     url = "https://CRAN.R-project.org/package=afttest",
-    note = "R package version 4.3.1.1"
+    doi = "10.32614/CRAN.package.afttest"
 )
 
 bibentry(
-    key = "afttest-R-paper",
-    bibtype = "Article",
-    title = "{afttest}: Model Diagnostics for Accelerated Failure Time Models",
+    key = "chiou2014fitting",
+    bibtype = "article",
+    title = "Fitting Accelerated Failure Time Models in Routine Survival Analysis with R Package aftgee",
     author = c(
         as.person("WooJung Bae"),
         as.person("Dongrak Choi"),
         as.person("Jun Yan"),
         as.person("Sangwook Kang")
         ),
-    journal = "Arxiv",
-    year = "2023",
-    url = "",
-)
-
-bibentry(
-    key = "afttest-paper",
-    bibtype = "Article",
-    title = "A general model-checking procedure for semiparametric AFT models",
-    author = c(
-        as.person("Dongrak Choi"),
-        as.person("WooJung Bae"),
-        as.person("Jun Yan"),
-        as.person("Sangwook Kang")
-        ),
-    journal = "Arxiv",
-    year = "2023",
-    url = "https://arxiv.org/abs/2305.11445"
+    journal = "Journal of Statistical Software",
+    volume = "61",
+    issue= "11",
+    pages= "1-23",
+    year = "2014",
+    doi = "10.18637/jss.v061.i11",
+    publisher = "Foundation for Open Access Statistics"
 )
