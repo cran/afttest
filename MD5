@@ -1,11 +1,11 @@
-8ccb577e9af41cde0dd9185e9771c767 *DESCRIPTION
+83ceac4be496147e4914e2eaa9184570 *DESCRIPTION
 3fdcc3be4e0d6bfeb871ec35894749ca *NAMESPACE
 048a60414b624b177f99f5b28f3d1832 *R/RcppExports.R
-fcd4285a49cf8302b08c8f4db16828c4 *R/afttest.R
+403c428346aa1836df15f1d9a06f2c2b *R/afttest.R
 45ff9ddee39e76d0b2d62bc9d0346524 *R/generic.R
-7da0b12deb378480543d681e336132a6 *README.md
-a2c7f0df2a3dde9678832f1eb649d998 *inst/CITATION
-5fdcf88d1c09ab0a6c904ffc8e93aa2b *inst/bib/afttest.bib
+6524cead263194df740870dd3ed0be3a *README.md
+e700a2bc7ad713477443d178ba2d25c6 *inst/CITATION
+d3771d509953f39f5850131146f84b12 *inst/bib/afttest.bib
 135e1c00d0062103ac538084b0d78b9f *inst/examples/ex_afttest.R
 0d0d281a8a6e9e78bd40f7e3b726898c *man/afttest.Rd
 88a0a55a178a3b317fa8a0e56520dff0 *man/export_Surv.Rd
