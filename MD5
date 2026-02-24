@@ -1,11 +1,11 @@
-83ceac4be496147e4914e2eaa9184570 *DESCRIPTION
+924d081fc3f9aef2bc19f8324c71cd9a *DESCRIPTION
 3fdcc3be4e0d6bfeb871ec35894749ca *NAMESPACE
 048a60414b624b177f99f5b28f3d1832 *R/RcppExports.R
-403c428346aa1836df15f1d9a06f2c2b *R/afttest.R
-45ff9ddee39e76d0b2d62bc9d0346524 *R/generic.R
+142e6c0b9cc5a70b013f19d2aa732398 *R/afttest.R
+1b2adb3388add2ae39f2d4bd288a576d *R/generic.R
 6524cead263194df740870dd3ed0be3a *README.md
-e700a2bc7ad713477443d178ba2d25c6 *inst/CITATION
-d3771d509953f39f5850131146f84b12 *inst/bib/afttest.bib
+166d25357fae2a5e8fc0e2bb240b0916 *inst/CITATION
+6b33402ef2bd9655caaf11680a016dae *inst/bib/afttest.bib
 135e1c00d0062103ac538084b0d78b9f *inst/examples/ex_afttest.R
 0d0d281a8a6e9e78bd40f7e3b726898c *man/afttest.Rd
 88a0a55a178a3b317fa8a0e56520dff0 *man/export_Surv.Rd
@@ -14,6 +14,6 @@ ad1fca0eff79a06f36fd4b2e20f62218 *man/print.afttest.Rd
 810e3a3a17c2aa81cebbbd25c5329a4c *man/summary.afttest.Rd
 2a6f9e9e044a78154d3cfda5936d6f48 *src/Makevars
 639c23f3a26fb051b76c7bb964dfccb8 *src/Makevars.win
-13ccaf94f1f9ea90d8cce2d550a247f0 *src/afttest.cpp
+130c64e02702caa4255ecda2bf28110c *src/afttest.cpp
 9c8571dc8fe62d9ee370bbbacb0209a1 *tests/testthat.R
 1e4c1de929e77b9aee29b2a03d0b3b40 *tests/testthat/test-afttest.R
