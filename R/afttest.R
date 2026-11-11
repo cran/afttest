@@ -2,6 +2,65 @@
 ## User's Main Function
 ##############################################################################
 
+.afttest_design_formula <- function(covnames) {
+  terms <- paste0("`", gsub("`", "\\\\`", covnames, fixed = TRUE), "`")
+  stats::as.formula(paste("survival::Surv(time, delta) ~",
+                          paste(terms, collapse = " + ")))
+}
+
+.afttest_validate_args <- function(npath, testType, covTested, covnames,
+                                   npathsave, linApprox, seed) {
+  if (!is.numeric(npath) || length(npath) != 1 || is.na(npath) ||
+      !is.finite(npath) || npath < 50 || npath != as.integer(npath)) {
+    stop("npath must be a single integer of at least 50.")
+  }
+  npath <- as.integer(npath)
+
+  if (!is.character(testType) || length(testType) != 1 || is.na(testType) ||
+      !testType %in% c("omnibus", "link", "covForm")) {
+    stop("testType must be one of 'omnibus', 'link', or 'covForm'.")
+  }
+
+  if (!is.numeric(npathsave) || length(npathsave) != 1 || is.na(npathsave) ||
+      !is.finite(npathsave) || npathsave < 0 ||
+      npathsave != as.integer(npathsave)) {
+    stop("npathsave must be a single nonnegative integer.")
+  }
+  npathsave <- as.integer(npathsave)
+  if (npathsave > npath) {
+    warning("npathsave exceeds npath; only npath paths will be saved.")
+    npathsave <- npath
+  }
+
+  if (!is.logical(linApprox) || length(linApprox) != 1 || is.na(linApprox)) {
+    stop("linApprox must be a single logical value.")
+  }
+
+  if (!is.null(seed) && (!is.numeric(seed) || length(seed) != 1 ||
+                         is.na(seed) || !is.finite(seed) ||
+                         seed != as.integer(seed))) {
+    stop("seed must be a single finite integer.")
+  }
+
+  covTested.num <- 1L
+  if (testType == "covForm") {
+    if (is.numeric(covTested) && length(covTested) == 1 &&
+        !is.na(covTested) && is.finite(covTested) &&
+        covTested == as.integer(covTested) && covTested >= 1 &&
+        covTested <= length(covnames)) {
+      covTested.num <- as.integer(covTested)
+    } else if (is.character(covTested) && length(covTested) == 1 &&
+               !is.na(covTested) && covTested %in% covnames) {
+      covTested.num <- match(covTested, covnames)
+    } else {
+      stop("covTested must identify one design-matrix column for covForm.")
+    }
+  }
+
+  list(npath = npath, testType = testType, npathsave = npathsave,
+       linApprox = linApprox, covTested.num = covTested.num)
+}
+
 #' Model Diagnostics for Semiparametric AFT Models
 #'
 #' @description
@@ -25,8 +84,10 @@
 #'   \item{apprx_process}{approximated process}
 #'   \item{obs_std_process}{standardized observed process}
 #'   \item{apprx_std_process}{standardized approximated processes}
-#'   \item{p_value}{obtained by the unstandardized test}
-#'   \item{p_std_value}{obtained by the standardized test}
+#'   \item{p_value}{finite-resampling Monte Carlo p-value for the
+#'   unstandardized test}
+#'   \item{p_std_value}{finite-resampling Monte Carlo p-value for the
+#'   standardized test}
 #'   \item{DF}{a data frame of observed failure time, right censoring indicator, 
 #'   covariates (scaled), time-transformed residual based on beta estimates}
 #'   \item{npath}{the number of sample paths}
@@ -87,13 +148,13 @@ afttest <- function(object, ...) {
 #'     \item{\code{is}}{Regression parameters are estimated by directly solving 
 #'     the induced-smoothing estimating equations.}
 #' }
-#' @param covTested A character string specifying the covariate which will be tested.
-#'   The argument \code{covTested} is necessary only if \code{testType} is 
-#'   \code{covForm}. The default option for \code{covTested} is given by "1", which 
-#'   represents the first covariate in the formula argument.
-#' @param npathsave An integer value specifying the number of paths saved among all the paths.
-#'   The default is given by 50. Note that it requires a lot of memory if saving all
-#'   sampled paths (N by N matrix for each npath, and so npath*N*N elements).
+#' @param covTested A single design-matrix column to test when \code{testType}
+#'   is \code{covForm}, supplied by position or name. In formulas containing
+#'   factors, a factor can expand to several columns; use one of the expanded
+#'   column names returned by \code{model.matrix()}.
+#' @param npathsave An integer value specifying the number of simulated paths
+#'   retained in the returned object. The default is 50. Retaining paths can
+#'   require substantial memory for omnibus tests.
 #' @param linApprox A logical value. If \code{TRUE}, the multiplier bootstrap is 
 #'   computed using the asymptotic linear approximation, which is significantly 
 #'   faster. If \code{FALSE}, the estimating equations are solved numerically for 
@@ -109,8 +170,9 @@ afttest.formula <- function(object, data, npath = 200, testType = "omnibus",
   eqType_supplied <- !missing(eqType)
   
   if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1) {
-      stop("Argument 'seed' must be a single numeric value.")
+    if (!is.numeric(seed) || length(seed) != 1 || is.na(seed) ||
+        !is.finite(seed) || seed != as.integer(seed)) {
+      stop("seed must be a single finite integer.")
     }
     if (exists(".Random.seed", envir = .GlobalEnv)) {
       old_seed <- get(".Random.seed", envir = .GlobalEnv)
@@ -132,8 +194,15 @@ afttest.formula <- function(object, data, npath = 200, testType = "omnibus",
   if (ncol(X) == 0) {
     stop("No covariates found in the formula. Intercept-only models are not supported.")
   }
-  covnames <- all.vars(object[[3]])
+  covnames <- colnames(X)
   cov.length <- length(covnames)
+  args <- .afttest_validate_args(npath, testType, covTested, covnames,
+                                 npathsave, linApprox, seed)
+  npath <- args$npath
+  testType <- args$testType
+  npathsave <- args$npathsave
+  linApprox <- args$linApprox
+  covTested.num <- args$covTested.num
   DF <- data.frame(unclass(Y), X)
   colnames(DF) <- c("time", "delta", covnames)
   
@@ -154,7 +223,7 @@ afttest.formula <- function(object, data, npath = 200, testType = "omnibus",
   }
   
   # beta coefficients from aftsrr function (aftgee package) - with original covariates
-  formula <- stats::as.formula(paste0("survival::Surv(time,delta)~", paste(covnames, collapse="+")))
+  formula <- .afttest_design_formula(covnames)
   if (length(estMethod) != 1 || !estMethod %in% c("ls", "rr")) {
     stop("estMethod must be either 'ls' or 'rr'.")
   }
@@ -174,74 +243,11 @@ afttest.formula <- function(object, data, npath = 200, testType = "omnibus",
   # Covariate Scaling
   time <- DF$time
   delta <- DF$delta
-  covariates <- scale(as.matrix(DF[, -(1:2)]))
+  covariates <- scale(as.matrix(DF[, -(1:2), drop = FALSE]))
   DF <- data.frame(time = time, delta = delta, covariates)
   
-  # npath
-  if (length(npath) > 1){
-    return(warning("npath needs to be an integer."))
-  } else {
-    if (!is.numeric(npath)) {
-      npath <- 200
-    } else {
-      npath <- max(npath,50)
-    }
-  }
-  
-  # testType
-  if (length(testType) > 1){
-    return(warning("testType needs to be one of 'omnibus', 'link', or 'covForm'"))
-  } else {
-    if (!testType %in% c("omnibus","link","covForm")) {
-      testType <- "omnibus"
-    }
-  }
-  
-  # npathsave
-  if (!is.numeric(npathsave) || length(npathsave) != 1) {
-    warning("'npathsave' must be a single numeric integer. Defaulting to npathsave = 50.")
-    npathsave <- 50L
-  } else {
-    npathsave <- as.integer(npathsave)
-  }
-  
-  # linApprox
-  if (length(linApprox) > 1) {
-    warning("linApprox needs to be a single logical value (TRUE or FALSE). Using default (TRUE).")
-    linApprox <- TRUE
-  } else {
-    if (!is.logical(linApprox)) {
-      warning("linApprox needs to be logical (TRUE or FALSE). Using default (TRUE).")
-      linApprox <- TRUE
-    }
-  }
-  
-  # covTested
-  covTested.num <- 1L
-  if (testType == "covForm") {
-    if (length(covTested) != 1) {
-      return(warning("covTested needs to have length 1."))
-    } else {
-      if (is.numeric(covTested)) {
-        if (covTested %% 1 != 0 || covTested < 1 || covTested > cov.length) {
-          return(warning("covTested needs to be a positive integer not greater than the number of covariates."))
-        } else {
-          covTested.num <- as.integer(covTested)
-        }
-      } else if (is.character(covTested)) {
-        if (!covTested %in% covnames) {
-          return(warning("covTested needs to specify one of the covariates in the formula."))
-        } else {
-          covTested.num <- which(covTested == covnames)
-        }
-      } else {
-        return(warning("covTested needs to be specified correctly."))
-      }
-    }
-  }
-  
   # beta coefficients from aftsrr function (aftgee package) - with scaled covariates
-  formula <- stats::as.formula(paste0("survival::Surv(time,delta)~",paste(covnames, collapse="+")))
+  formula <- .afttest_design_formula(covnames)
   if (estMethod == "ls") {
     b <- - aftgee::aftgee(formula, data = DF)$coef.res[-1]
   } else if (estMethod == "rr") {
@@ -287,13 +293,10 @@ afttest.formula <- function(object, data, npath = 200, testType = "omnibus",
 #'   from the fitted object, \code{"ns"} is used. The permitted values are
 #'   \code{"ns"} and \code{"is"}. If a different value from that used in the
 #'   fitted object is supplied, it is ignored with a warning.
-#' @param covTested A character string specifying the covariate which will be tested.
-#'   The argument \code{covTested} is necessary only if \code{testType} is 
-#'   \code{covForm}. The default option for \code{covTested} is given by "1", which 
-#'   represents the first covariate in the formula argument.
-#' @param npathsave An integer value specifying the number of paths saved among all the paths.
-#'   The default is given by 50. Note that it requires a lot of memory if saving all
-#'   sampled paths (N by N matrix for each npath, and so npath*N*N elements).
+#' @param covTested A single design-matrix column to test when \code{testType}
+#'   is \code{covForm}, supplied by position or name.
+#' @param npathsave An integer value specifying the number of simulated paths
+#'   retained in the returned object. The default is 50.
 #' @param linApprox A logical value. If \code{TRUE}, the multiplier bootstrap is 
 #'   computed using the asymptotic linear approximation, which is significantly 
 #'   faster. If \code{FALSE}, the estimating equations are solved numerically for 
@@ -333,8 +336,9 @@ afttest.aftsrr <- function(object, data, npath = 200, testType = "omnibus", eqTy
   eqType <- fitted_eqType
   
   if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1) {
-      stop("Argument 'seed' must be a single numeric value.")
+    if (!is.numeric(seed) || length(seed) != 1 || is.na(seed) ||
+        !is.finite(seed) || seed != as.integer(seed)) {
+      stop("seed must be a single finite integer.")
     }
     if (exists(".Random.seed", envir = .GlobalEnv)) {
       old_seed <- get(".Random.seed", envir = .GlobalEnv)
@@ -358,6 +362,13 @@ afttest.aftsrr <- function(object, data, npath = 200, testType = "omnibus", eqTy
   }
   covnames <- colnames(X)
   cov.length <- length(covnames)
+  args <- .afttest_validate_args(npath, testType, covTested, covnames,
+                                 npathsave, linApprox, seed)
+  npath <- args$npath
+  testType <- args$testType
+  npathsave <- args$npathsave
+  linApprox <- args$linApprox
+  covTested.num <- args$covTested.num
   DF <- data.frame(unclass(Y), X)
   colnames(DF) <- c("time", "delta", covnames)
   
@@ -380,74 +391,11 @@ afttest.aftsrr <- function(object, data, npath = 200, testType = "omnibus", eqTy
   # Covariate Scaling
   time <- DF$time
   delta <- DF$delta
-  covariates <- scale(as.matrix(DF[, -(1:2)]))
+  covariates <- scale(as.matrix(DF[, -(1:2), drop = FALSE]))
   DF <- data.frame(time = time, delta = delta, covariates)
   
-  # npath
-  if (length(npath) > 1){
-    return(warning("npath needs to be an integer."))
-  } else {
-    if (!is.numeric(npath)) {
-      npath <- 200
-    } else {
-      npath <- max(npath,50)
-    }
-  }
-  
-  # testType
-  if (length(testType) > 1){
-    return(warning("testType needs to be one of 'omnibus', 'link', or 'covForm'"))
-  } else {
-    if (!testType %in% c("omnibus","link","covForm")) {
-      testType <- "omnibus"
-    }
-  }
-  
-  # npathsave
-  if (!is.numeric(npathsave) || length(npathsave) != 1) {
-    warning("'npathsave' must be a single numeric integer. Defaulting to npathsave = 50.")
-    npathsave <- 50L
-  } else {
-    npathsave <- as.integer(npathsave)
-  }
-  
-  # linApprox
-  if (length(linApprox) > 1) {
-    warning("linApprox needs to be a single logical value (TRUE or FALSE). Using default (TRUE).")
-    linApprox <- TRUE
-  } else {
-    if (!is.logical(linApprox)) {
-      warning("linApprox needs to be logical (TRUE or FALSE). Using default (TRUE).")
-      linApprox <- TRUE
-    }
-  }
-  
-  # covTested
-  covTested.num <- 1L
-  if (testType == "covForm") {
-    if (length(covTested) != 1) {
-      return(warning("covTested needs to have length 1."))
-    } else {
-      if (is.numeric(covTested)) {
-        if (covTested %% 1 != 0 || covTested < 1 || covTested > cov.length) {
-          return(warning("covTested needs to be a positive integer not greater than the number of covariates."))
-        } else {
-          covTested.num <- as.integer(covTested)
-        }
-      } else if (is.character(covTested)) {
-        if (!covTested %in% covnames) {
-          return(warning("covTested needs to specify one of the covariates in the formula."))
-        } else {
-          covTested.num <- which(covTested == covnames)
-        }
-      } else {
-        return(warning("covTested needs to be specified correctly."))
-      }
-    }
-  }
-  
   # beta coefficients from aftsrr function (aftgee package)
-  formula <- stats::as.formula(paste0("survival::Surv(time,delta)~",paste(covnames, collapse="+")))
+  formula <- .afttest_design_formula(covnames)
   b <- - aftgee::aftsrr(formula, data = DF, eqType = eqType, rankWeights = "gehan")$beta
   
   # This function contains the core logic (the C++ calls)
@@ -484,13 +432,10 @@ afttest.aftsrr <- function(object, data, npath = 200, testType = "omnibus", eqTy
 #' @param eqType The estimating-equation type used for the diagnostic
 #'   procedure. For a fitted \code{aftgee} object, this is fixed to
 #'   \code{"ls"}. Any other supplied value is ignored with a warning.
-#' @param covTested A character string specifying the covariate which will be tested.
-#'   The argument \code{covTested} is necessary only if \code{testType} is 
-#'   \code{covForm}. The default option for \code{covTested} is given by "1", which 
-#'   represents the first covariate in the formula argument.
-#' @param npathsave An integer value specifying the number of paths saved among all the paths.
-#'   The default is given by 50. Note that it requires a lot of memory if saving all
-#'   sampled paths (N by N matrix for each npath, and so npath*N*N elements).
+#' @param covTested A single design-matrix column to test when \code{testType}
+#'   is \code{covForm}, supplied by position or name.
+#' @param npathsave An integer value specifying the number of simulated paths
+#'   retained in the returned object. The default is 50.
 #' @param linApprox A logical value. If \code{TRUE}, the multiplier bootstrap is 
 #'   computed using the asymptotic linear approximation, which is significantly 
 #'   faster. If \code{FALSE}, the estimating equations are solved numerically for 
@@ -516,8 +461,9 @@ afttest.aftgee <- function(object, data, npath = 200, testType = "omnibus", eqTy
   eqType <- "ls"
   
   if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1) {
-      stop("Argument 'seed' must be a single numeric value.")
+    if (!is.numeric(seed) || length(seed) != 1 || is.na(seed) ||
+        !is.finite(seed) || seed != as.integer(seed)) {
+      stop("seed must be a single finite integer.")
     }
     if (exists(".Random.seed", envir = .GlobalEnv)) {
       old_seed <- get(".Random.seed", envir = .GlobalEnv)
@@ -541,6 +487,13 @@ afttest.aftgee <- function(object, data, npath = 200, testType = "omnibus", eqTy
   }
   covnames <- colnames(X)
   cov.length <- length(covnames)
+  args <- .afttest_validate_args(npath, testType, covTested, covnames,
+                                 npathsave, linApprox, seed)
+  npath <- args$npath
+  testType <- args$testType
+  npathsave <- args$npathsave
+  linApprox <- args$linApprox
+  covTested.num <- args$covTested.num
   DF <- data.frame(unclass(Y), X)
   colnames(DF) <- c("time", "delta", covnames)
   
@@ -563,77 +516,14 @@ afttest.aftgee <- function(object, data, npath = 200, testType = "omnibus", eqTy
   # Covariate Scaling
   time <- DF$time
   delta <- DF$delta
-  covariates <- scale(as.matrix(DF[, -(1:2)]))
+  covariates <- scale(as.matrix(DF[, -(1:2), drop = FALSE]))
   DF <- data.frame(time = time, delta = delta, covariates)
   
   # estMethod
   estMethod = "ls"
   
-  # npath
-  if (length(npath) > 1){
-    return(warning("npath needs to be an integer."))
-  } else {
-    if (!is.numeric(npath)) {
-      npath <- 200
-    } else {
-      npath <- max(npath,50)
-    }
-  }
-  
-  # testType
-  if (length(testType) > 1){
-    return(warning("testType needs to be one of 'omnibus', 'link', or 'covForm'"))
-  } else {
-    if (!testType %in% c("omnibus","link","covForm")) {
-      testType <- "omnibus"
-    }
-  }
-  
-  # npathsave
-  if (!is.numeric(npathsave) || length(npathsave) != 1) {
-    warning("'npathsave' must be a single numeric integer. Defaulting to npathsave = 50.")
-    npathsave <- 50L
-  } else {
-    npathsave <- as.integer(npathsave)
-  }
-  
-  # linApprox
-  if (length(linApprox) > 1) {
-    warning("linApprox needs to be a single logical value (TRUE or FALSE). Using default (TRUE).")
-    linApprox <- TRUE
-  } else {
-    if (!is.logical(linApprox)) {
-      warning("linApprox needs to be logical (TRUE or FALSE). Using default (TRUE).")
-      linApprox <- TRUE
-    }
-  }
-  
-  # covTested
-  covTested.num <- 1L
-  if (testType == "covForm") {
-    if (length(covTested) != 1) {
-      return(warning("covTested needs to have length 1."))
-    } else {
-      if (is.numeric(covTested)) {
-        if (covTested %% 1 != 0 || covTested < 1 || covTested > cov.length) {
-          return(warning("covTested needs to be a positive integer not greater than the number of covariates."))
-        } else {
-          covTested.num <- as.integer(covTested)
-        }
-      } else if (is.character(covTested)) {
-        if (!covTested %in% covnames) {
-          return(warning("covTested needs to specify one of the covariates in the formula."))
-        } else {
-          covTested.num <- which(covTested == covnames)
-        }
-      } else {
-        return(warning("covTested needs to be specified correctly."))
-      }
-    }
-  }
-  
   # beta coefficients from aftsrr function (aftgee package)
-  formula <- stats::as.formula(paste0("survival::Surv(time,delta)~",paste(covnames, collapse="+")))
+  formula <- .afttest_design_formula(covnames)
   b <- - aftgee::aftgee(formula, data = DF)$coef.res[-1]
   
   # This function contains the core logic (the C++ calls)

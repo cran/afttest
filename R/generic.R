@@ -30,7 +30,16 @@ print.afttest <- function(x, ...) {
   
   cat("\n--- p-values ---\n")
   p_vals <- c(x$p_value, x$p_std_value)
-  p_vals_fmt <- format.pval(p_vals, digits = 3, eps = 0.001)
+  p_vals_fmt <- vapply(
+    p_vals,
+    function(p) {
+      if (p < 0.001) {
+        format.pval(p, digits = 3, eps = 0.001)
+      } else {
+        format.pval(round(p, 3), digits = 3, eps = 0.001)
+      }
+    },
+    character(1))
   p_valueTAB <- data.frame(t(p_vals_fmt))
   rownames(p_valueTAB) <- ""
   colnames(p_valueTAB) <- c("unstandardized", "standardized")
@@ -77,8 +86,16 @@ summary.afttest <- function(object, ...) {
   
   cat("\n--- p-values ---\n")
   p_vals <- c(object$p_value, object$p_std_value)
-  p_vals_fmt <- format.pval(p_vals, digits = 3, eps = 0.001)
-  
+  p_vals_fmt <- vapply(
+    p_vals,
+    function(p) {
+      if (p < 0.001) {
+        format.pval(p, digits = 3, eps = 0.001)
+      } else {
+        format.pval(round(p, 3), digits = 3, eps = 0.001)
+      }
+    },
+    character(1))
   p.valueTAB <- data.frame(t(p_vals_fmt))
   rownames(p.valueTAB) <- ""
   colnames(p.valueTAB) <- c("unstandardized", "standardized")
@@ -131,9 +148,6 @@ summary.afttest <- function(object, ...) {
 #' @example inst/examples/ex_afttest.R
 #' @export
 plot.afttest <- function(x, npath = 50, std = TRUE, quantile = NULL, ...){
-  # eqType
-  eqType <- x$eqType
-  
   # testType
   testType <- x$testType
   
@@ -161,15 +175,6 @@ plot.afttest <- function(x, npath = 50, std = TRUE, quantile = NULL, ...){
     warning(sprintf("Requested npath (%d) exceeds stored paths (%d). Plotting all %d available paths.", 
                     npath, x$npathsave, x$npathsave))
     npath <- x$npathsave
-  }
-  
-  # eqType
-  if (eqType=="ns") {
-    testTypeQuote <- "non-smooth"
-  } else if (eqType=="ns") {
-    testTypeQuote <- "induced-smoothed"
-  } else if (eqType=="ns") {
-    testTypeQuote <- "least-squares"
   }
   
   stdTypeQuote <- ifelse(std=="std","standardized","unstandardized")
